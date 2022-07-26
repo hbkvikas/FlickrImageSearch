@@ -19,11 +19,12 @@ FlickrSearchMainWindow::FlickrSearchMainWindow(QWidget *parent)
     auto main_spliter = new QSplitter(Qt::Vertical);
     main_spliter->addWidget(ui->grpFlickrSearch);
     main_spliter->addWidget(image_spliter);
+    main_spliter->addWidget(ui->grpPageTrack);
 
     m_imgViewer->setHidden(true);
 
     int w = main_spliter->width();
-    main_spliter->setSizes({w / 7, 10 * w / 7});
+    main_spliter->setSizes({w / 7, 10 * w / 7, w / 10});
     setCentralWidget(main_spliter);
 
     statusImgUrlLabel = new QLabel(this);
@@ -37,6 +38,16 @@ FlickrSearchMainWindow::FlickrSearchMainWindow(QWidget *parent)
     ui->listWidget->setViewMode(QListWidget::IconMode);
 
     connect(ui->listWidget, &QListWidget::itemClicked, this, &FlickrSearchMainWindow::viewImage);
+
+    init();
+
+    ui->grpPageTrack->setHidden(true);
+
+    connect(ui->btnNextPage, &QPushButton::clicked, this, &FlickrSearchMainWindow::goToNextPage);
+    connect(ui->btnPreviousPage, &QPushButton::clicked, this, &FlickrSearchMainWindow::goToPrevPage);
+    connect(ui->btnLastPage, &QPushButton::clicked, this, &FlickrSearchMainWindow::goToLastPage);
+    connect(ui->btnFirstPage, &QPushButton::clicked, this, &FlickrSearchMainWindow::goToFirstPage);
+
     this->showMaximized();
 }
 
@@ -45,27 +56,47 @@ FlickrSearchMainWindow::~FlickrSearchMainWindow()
     delete ui;
 }
 
-void FlickrSearchMainWindow :: flickrSearch()
+void FlickrSearchMainWindow::init()
 {
+    m_currentPage = 1;
+    ui->edtCurrentPage->setText("1");
+    ui->edtPreviousPage->setText("1");
+    ui->edtNextPage->setText("2");
+}
 
+void FlickrSearchMainWindow :: flickrSearch(int pageNumber)
+{
     if(ui->edtFlickrSearch->text().isEmpty())
     {
         QMessageBox::critical(this, "Error", "No search input provided");
         return;
     }
+    ui->grpPageTrack->setHidden(false);
     m_imgViewer->init();
     m_imgViewer->setHidden(true);
     counter = 0;
-    flickrApi.getimageSearchJson(ui->edtFlickrSearch->text());
+    auto searchKey = ui->edtFlickrSearch->text();
+    if(m_searchKey != searchKey)
+    {
+       init();
+    }
+    else
+    {
+        pageNumber = m_currentPage;
+    }
+    m_searchKey = searchKey;
+    flickrApi.getimageSearchJson(searchKey, pageNumber);
     ui->listWidget->clear();
     m_mpImageList.clear();
 }
 
 void FlickrSearchMainWindow::loadImage()
 {
+    m_lastPage = flickrApi.m_totalPages;
+    ui->edtTotalPages->setText(QString::number(m_lastPage));
     auto imageUrl = flickrApi.listImageUrl->at(counter++);
-    qDebug() << imageUrl;
-    emit setImage(imageUrl, QSize(200, 200));
+//    qDebug() << imageUrl;
+    emit setImage(imageUrl, QSize(190, 190));
 }
 
 void FlickrSearchMainWindow::displayImage(const QString& imgUrl,
@@ -120,4 +151,44 @@ void FlickrSearchMainWindow::keyPressEvent(QKeyEvent *event)
         flickrSearch();
     else
         QMainWindow::keyPressEvent(event);
+}
+
+void FlickrSearchMainWindow::goToNextPage()
+{
+    auto currentPage = ui->edtCurrentPage->text().toInt();
+    if(currentPage < m_lastPage){
+        ui->edtCurrentPage->setText(QString::number(++m_currentPage));
+        ui->edtPreviousPage->setText(QString::number(m_currentPage - 1));
+        ui->edtNextPage->setText(QString::number((m_currentPage + 1) > m_lastPage ? m_lastPage:(m_currentPage + 1)));
+
+        flickrSearch(m_currentPage);
+    }
+}
+void FlickrSearchMainWindow::goToPrevPage()
+{
+    auto currentPage = ui->edtCurrentPage->text().toInt();
+    if(currentPage > 1){
+        ui->edtCurrentPage->setText(QString::number(--m_currentPage));
+        ui->edtPreviousPage->setText(QString::number((m_currentPage - 1) == 0 ? 1 : (m_currentPage - 1)));
+        ui->edtNextPage->setText(QString::number(m_currentPage + 1));
+        flickrSearch(m_currentPage);
+    }
+}
+void FlickrSearchMainWindow::goToLastPage()
+{
+    m_currentPage = m_lastPage;
+    ui->edtCurrentPage->setText(QString::number(m_lastPage));
+    ui->edtPreviousPage->setText(QString::number(m_lastPage - 1));
+    ui->edtNextPage->setText(QString::number(m_lastPage));
+    flickrSearch(m_lastPage);
+
+}
+
+void FlickrSearchMainWindow::goToFirstPage()
+{
+    m_currentPage = 1;
+    ui->edtCurrentPage->setText(QString::number(m_currentPage));
+    ui->edtPreviousPage->setText(QString::number(m_currentPage));
+    ui->edtNextPage->setText(QString::number(m_currentPage + 1));
+    flickrSearch(m_currentPage);
 }

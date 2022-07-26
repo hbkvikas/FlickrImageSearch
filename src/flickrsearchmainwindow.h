@@ -30,12 +30,16 @@ public:
 private:
     QLabel *statusImgUrlLabel;
     void keyPressEvent(QKeyEvent *event) override;
+    int m_currentPage = 1;
+    int m_lastPage;
+    QString m_searchKey;
+    void init();
 
 public:
     Ui::FlickrSearchMainWindow *ui;
 
 public slots:
-    void flickrSearch();
+    void flickrSearch(int pageNumber = 1);
     void loadImage();
     void displayImage(const QString& imgUrl,
                       QImage* image,
@@ -43,6 +47,11 @@ public slots:
     void downloadSetImage(QString imageUrl, QSize sz);
 
     void viewImage(QListWidgetItem*);
+
+    void goToNextPage();
+    void goToPrevPage();
+    void goToLastPage();
+    void goToFirstPage();
 
 
 signals:

@@ -43,7 +43,7 @@ void FileDownloader::onFinished(QNetworkReply * reply)
     {
         case QNetworkReply::NoError:
         {
-            qDebug("file is downloaded successfully.");
+//            qDebug("file is downloaded successfully.");
         }
         break;
         default:

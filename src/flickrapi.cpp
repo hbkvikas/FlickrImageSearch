@@ -12,16 +12,22 @@ QString FlickrApi::getApiKey() const
     return m_apiKey;
 }
 
-bool FlickrApi::getimageSearchJson(QString searchKey, QString apiKey)
+bool FlickrApi::getimageSearchJson(QString searchKey, int pageNumber, QString apiKey)
 {
+    if(m_searchKey != searchKey)
+    {
+        m_totalPagesSet = false;
+    }
+    m_searchKey = searchKey;
     listImageUrl->clear();
     if(apiKey == "")
         apiKey = getApiKey();
 
     // url for photo search
-    QString url(QString("https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=%1&format=json&nojsoncallback=1&safe_search=1&text=%2") \
+    QString url(QString("https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=%1&format=json&nojsoncallback=1&safe_search=1&text=%2&page=%3") \
                 .arg(apiKey) \
-                .arg(searchKey));
+                .arg(searchKey)
+                .arg(QString::number(pageNumber)));
 
     qDebug() << "Requested URL: " << url;
 
@@ -36,7 +42,15 @@ void FlickrApi::jsonInfoReceived()
 {
     QJsonObject *jsonList = restClient->userJsonInfo;
 
-    auto photosJsonList = jsonList->value("photos").toObject().value("photo").toArray();
+    auto photoObject = jsonList->value("photos").toObject();
+
+    if(!m_totalPagesSet)
+    {
+        m_totalPages = photoObject.value("pages").toInt();
+        m_totalPagesSet = true;
+    }
+
+    auto photosJsonList = photoObject.value("photo").toArray();
 
     for(auto value: qAsConst(photosJsonList))
     {

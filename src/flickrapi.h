@@ -14,12 +14,18 @@ class FlickrApi : public QObject
     Q_OBJECT
 private:
     const QString m_apiKey;
+    bool m_totalPagesSet;
+    QString m_searchKey;
 public:
     explicit FlickrApi(QString apiKey, QObject *parent = nullptr);
     QString getApiKey() const;
-    bool getimageSearchJson(QString url, QString apiKey = "");
+    bool getimageSearchJson(QString searchKey,
+                            int pageNumber = 1,
+                            QString apiKey = "");
     FlickrRestClient *restClient;
     QList<QString> *listImageUrl;
+
+    int m_totalPages;
 
 signals:
     void gotImagesUrlList();
