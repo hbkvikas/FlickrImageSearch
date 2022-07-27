@@ -7,7 +7,7 @@ int FlickrSearchMainWindow::counter = 0;
 
 FlickrSearchMainWindow::FlickrSearchMainWindow(QWidget *parent)
     : QMainWindow(parent)
-    , flickrApi(FlickrApi("63bcddc9a52d56634945477704924a1e")),
+    , flickrApi(FlickrApi("<Use your FlickrAPi here>")),
       ui(new Ui::FlickrSearchMainWindow)
 {
     ui->setupUi(this);
